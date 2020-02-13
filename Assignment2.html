@@ -1,0 +1,392 @@
+Skip to content
+Search or jump to…
+
+Pull requests
+Issues
+Marketplace
+Explore
+ 
+@czhou2822 
+Learn Git and GitHub without any code!
+Using the Hello World guide, you’ll start a branch, write comments, and open a pull request.
+
+
+cs-imgd-420x-20a
+/
+cs-imgd-420x-20a.github.io
+3
+315
+ Code Issues 0 Pull requests 11 Actions Projects 0 Wiki Security Insights
+cs-imgd-420x-20a.github.io/webgl_template.htm
+@charlieroberts charlieroberts slight tweaks to webgl template and day 4 notes
+e065d57 2 days ago
+127 lines (104 sloc)  3.77 KB
+  
+<!doctype html>
+<html lang='en'>
+  <head>
+    <style>body{ margin:0 }</style>
+  </head>
+  <body>
+    <canvas id='gl'></canvas>
+  </body>
+  <!-- vertex shader, as simple as possible -->
+  <script id='vertex' type='x-shader/x-vertex'>
+    attribute vec2 a_position;
+
+    void main() {
+      gl_Position = vec4( a_position, 0., 1. );
+    }
+  </script>
+
+  <!-- fragment shader -->
+  <script id='fragment' type='x-shader/x-fragment'>
+    #ifdef GL_ES
+    precision mediump float;
+    #endif
+    
+    uniform mediump float time;
+    uniform mediump vec2 resolution;
+    uniform sampler2D uSampler;
+
+    vec3 getLumin (in vec3 inColor)
+    {
+      float lumin = 0.2125*inColor.r + 0.7157*inColor.g + 0.0721*inColor.b;
+      return vec3 (lumin, lumin, lumin);
+    }
+
+    vec3 getLuminInversion (in vec3 inColor)
+    {
+      return 1.-getLumin(inColor);
+    }
+
+    vec3 getLuminKeying (in vec3 inColor, float key)
+    {
+      vec3 lumin = getLumin(inColor);
+
+      if(lumin.x >= key) return lumin;
+      else return vec3 (0.,0.,0.);
+
+    }
+
+
+    vec3 rgb2hsb( in vec3 c )
+    {
+      vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+      vec4 p = mix(vec4(c.bg, K.wz),
+                   vec4(c.gb, K.xy),
+                   step(c.b, c.g));
+      vec4 q = mix(vec4(p.xyw, c.r),
+                   vec4(c.r, p.yzx),
+                   step(p.x, c.r));
+      float d = q.x - min(q.w, q.y);
+      float e = 1.0e-10;
+      return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)),
+                  d / (q.x + e),
+                  q.x);
+    }
+
+
+    vec3 hsb2rgb( in vec3 c )
+    {
+      vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),
+                               6.0)-3.0)-1.0,
+                       0.0,
+                       1.0 );
+      rgb = rgb*rgb*(3.0-2.0*rgb);
+      return c.z * mix( vec3(1.0), rgb, c.y);
+    }
+
+
+
+    vec3 changeBrightness(in vec3 hsbIn)
+    { 
+      float frequency = 0.05;
+      float b = sin(time * frequency * hsbIn.z);
+      return vec3 (hsbIn.x, hsbIn.y, b);
+    }
+   
+    vec3 sinOscillator(in float frequency, in vec3 colorIn)
+    {
+      
+      float x =  sin( time * frequency * colorIn.x);
+      float y =  sin( time * frequency * colorIn.y);
+      float z =  sin( time * frequency * colorIn.z);
+
+      return vec3( x,y,z );
+    }
+
+    vec3 squreWaveOscillator( in vec3 colorIn)
+    {
+      
+      float wave = sign(sin(time));
+
+      return wave * colorIn;
+      
+    }
+
+    vec3 triangleWaveOscillator( in vec3 colorIn)
+    {
+      
+      float wave = 1.-4.*abs(0.5-fract(0.5*time+0.5));
+      vec3 myOutput = wave * colorIn;
+
+      return myOutput ;
+      
+    }
+
+    float triangleWaveOscillator( in float colorIn)
+    {
+      
+      float wave = 1.-4.*abs(0.5-fract(0.5*time+0.5));
+      float x =  wave * colorIn;
+
+      return x;
+      
+    }
+
+
+
+    float random (in vec2 st) 
+    {
+        return fract(sin(dot(st.xy,
+                             vec2(12.9898,78.233)))
+                     * 43758.5453123);
+    }
+
+
+
+
+  float noise (in vec2 st) 
+  {
+      vec2 i = floor(st);
+      vec2 f = fract(st);
+
+      // Four corners in 2D of a tile
+      float a = random(i);
+      float b = random(i + vec2(1.0, 0.0));
+      float c = random(i + vec2(0.0, 1.0));
+      float d = random(i + vec2(1.0, 1.0));
+
+      // Smooth Interpolation
+
+      // Cubic Hermine Curve.  Same as SmoothStep()
+      vec2 u = f*f*(3.0-2.0*f);
+      // u = smoothstep(0.,1.,f);
+
+      // Mix 4 coorners percentages
+      return mix(a, b, u.x) +
+              (c - a)* u.y * (1.0 - u.x) +
+              (d - b) * u.x * u.y;
+  }
+
+
+vec3 makeNoise(in vec3 colorIn)
+{
+  float noiseX = noise(vec2(colorIn.x, colorIn.y) * mod( time/50., 1. ));
+  float noiseY = noise(vec2(colorIn.y, colorIn.z) * mod( time/50., 1. ));
+  float noiseZ = noise(vec2(colorIn.z, colorIn.x) * mod( time/50., 1. ));
+
+  return vec3 (noiseX, noiseY, noiseZ);
+}
+
+
+    void main() 
+    {
+      vec3 defaultColor = vec3 (gl_FragCoord.x / resolution.x, gl_FragCoord.y / resolution.y, mod( time/100., 1. ));
+
+      vec3 colorOut = defaultColor;
+
+      //colorOut = texture2D(uSampler, vec2(gl_FragCoord.x / resolution.x, gl_FragCoord.y / resolution.y)).rgb;
+
+
+
+      colorOut = sinOscillator(0.05, colorOut);  //1
+
+      colorOut = rgb2hsb(colorOut);
+    colorOut = changeBrightness(colorOut);
+    colorOut = hsb2rgb(colorOut);   //brightness control  //2
+
+  //    colorOut = getLuminInversion(colorOut);  //luma inversion  //3
+
+  //    colorOut = getLuminKeying(colorOut, 0.4);   //luma keying  //4
+
+
+ // colorOut = squreWaveOscillator(colorOut);  //squrewave    //5
+
+
+ // colorOut = triangleWaveOscillator( colorOut);  //triangle   //6
+
+
+
+
+
+      colorOut = makeNoise(colorOut);    //7
+    
+
+      gl_FragColor = vec4 (colorOut, 1.0);
+
+    }
+  </script>
+
+
+  <script type='text/javascript'>
+    // "global" variables
+    let gl, uTime, video, textureLoaded, texture
+
+    window.onload = function() 
+    {
+      const canvas = document.getElementById( 'gl' )
+      gl = canvas.getContext( 'webgl' )
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+
+      // define drawing area of canvas. bottom corner, width / height
+      gl.viewport( 0,0,gl.drawingBufferWidth, gl.drawingBufferHeight )
+
+      // create a buffer object to store vertices
+      const buffer = gl.createBuffer()
+
+      // point buffer at graphic context's ARRAY_BUFFER
+      gl.bindBuffer( gl.ARRAY_BUFFER, buffer )
+
+      const triangles = new Float32Array([
+        -1, -1,
+        1,  -1,
+        -1, 1,
+        -1, 1,
+        1, -1,
+        1, 1
+      ])
+
+      // initialize memory for buffer and populate it. Give
+      // open gl hint contents will not change dynamically.
+      gl.bufferData( gl.ARRAY_BUFFER, triangles, gl.STATIC_DRAW )
+
+      // create vertex shader
+      let shaderScript = document.getElementById('vertex')
+      let shaderSource = shaderScript.text
+      const vertexShader = gl.createShader( gl.VERTEX_SHADER )
+      gl.shaderSource( vertexShader, shaderSource );
+      gl.compileShader( vertexShader )
+
+      // create fragment shader
+      shaderScript = document.getElementById('fragment')
+      shaderSource = shaderScript.text
+      const fragmentShader = gl.createShader( gl.FRAGMENT_SHADER )
+      gl.shaderSource( fragmentShader, shaderSource );
+      gl.compileShader( fragmentShader )
+
+      // create shader program
+      const program = gl.createProgram()
+      gl.attachShader( program, vertexShader )
+      gl.attachShader( program, fragmentShader )
+      gl.linkProgram( program )
+      gl.useProgram( program )
+      
+      /* ALL ATTRIBUTE/UNIFORM INITIALIZATION MUST COME AFTER 
+      CREATING/LINKING/USING THE SHADER PROGAM */
+      
+      // find a pointer to the uniform "time" in our fragment shader
+      uTime = gl.getUniformLocation( program, 'time' ) 
+      const uRes = gl.getUniformLocation( program, 'resolution' )
+      gl.uniform2f( uRes, window.innerWidth, window.innerHeight )
+
+      // get position attribute location in shader
+      const position = gl.getAttribLocation( program, 'a_position' )
+      // enable the attribute
+      gl.enableVertexAttribArray( position )
+      // this will point to the vertices in the last bound array buffer.
+      // In this example, we only use one array buffer, where we're storing 
+      // our vertices
+      gl.vertexAttribPointer( position, 2, gl.FLOAT, false, 0,0 )
+      
+      getVideo() ;
+
+      render();
+
+      if( gl.getProgramParameter( program, gl.LINK_STATUS ) !== true )
+      {
+        const log = gl.getProgramInfoLog( program )
+        gl.deleteShader( vertexShader )
+        gl.deleteShader( fragmentShader )
+        gl.deleteProgram( program )
+        console.error( log )
+      }
+      console.log("hello world");
+    }
+
+    function makeTexture() 
+    {
+      // create an OpenGL texture object
+      texture = gl.createTexture()
+      
+      // this tells OpenGL which texture object to use for subsequent operations
+      gl.bindTexture( gl.TEXTURE_2D, texture )
+        
+      // since canvas draws from the top and shaders draw from the bottom, we
+      // have to flip our canvas when using it as a shader.
+      gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true )
+
+      // how to map when texture element is more than one pixel
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR )
+      // how to map when texture element is less than one pixel
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR )
+      
+      // you must have these properties defined for the video texture to
+      // work correctly
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE )
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE )
+      
+      // let our render loop know when the texture is ready
+      textureLoaded = true
+    }
+
+
+
+    function getVideo() 
+    {
+      video = document.createElement( 'video' )
+
+      navigator.mediaDevices.getUserMedia({
+        video:true
+      }).then( stream => { 
+        video.srcObject = stream
+        video.play()
+        makeTexture()
+      }) 
+        
+      return video
+    }
+
+    // keep track of time via incremental frame counter
+    let time = 0
+    render = function() 
+    {
+      // schedules render to be called the next time the video card requests 
+      // a frame of video
+      window.requestAnimationFrame( render )
+      
+      // check to see if video is playing and the texture has been created
+      if( textureLoaded === true ) 
+      {
+        // send texture data to GPU    
+        gl.texImage2D( 
+          gl.TEXTURE_2D,    // target: you will always want gl.TEXTURE_2D
+          0,                // level of detail: 0 is the base
+          gl.RGBA, gl.RGBA, // color formats
+          gl.UNSIGNED_BYTE, // type: the type of texture data; 0-255
+          video             // pixel source: could also be video or image
+        )
+        
+        // draw triangles using the array buffer from index 0 to 6 (6 is count)
+        gl.drawArrays( gl.TRIANGLES, 0, 6 )
+      }
+      
+      // update time on CPU and GPU
+      time++
+      gl.uniform1f( uTime, time )
+    }
+  </script>
+
+</html>
