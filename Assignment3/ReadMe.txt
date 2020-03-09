@@ -1,4 +1,4 @@
- Assignment 3
+Assignment 3
 The purpose of this project is to explore Langton’s ant in the GLSL environment without the need of computation on the CPU side. Unfortunately, due to the time constraint, I cannot incorporate color into the project, nor it suggests any themes. But rather a vanilla simulation with extra interactive features.  
 Implementation:
 In other to implement the simulation, I choose to use 4 channels within each pixel to store the info I need for the program. 
