@@ -256,7 +256,6 @@
     		gl_FragColor = myGet(0,0);
     	}
       
-      //gl_FragColor = vec4(1., 0., 0., time);
     }
 
   </script>
@@ -299,9 +298,6 @@
 
       if(textureColor.r == 1.)
       {
-        //gl_FragColor = vec4( vec3(textureColor.r), 1. );//reference
-        //gl_FragColor = vec4 (red, green, blue, alpha);
-
         vec3 rgbColor = hsb2rgb(vec3(textureColor.a,1.0,1.0));
         gl_FragColor = vec4(rgbColor, 1.0);
       }
@@ -310,14 +306,6 @@
       {
         gl_FragColor = vec4(0.);
       }
-
-
-
-
-
-      //vec3 rgbColor = hsb2rgb(vec3(textureColor.a,1.0,1.0));
-      //gl_FragColor = vec4(rgbColor, 1.0);
-
     }
   </script>
   <script type="text/javascript" src="gui.js"></script>
@@ -326,7 +314,7 @@
         simulationProgram, drawProgram, uIsTorroidal,
         uSimulationTime, uSimulationState, uDrawTime,
         textureBack, textureFront,uIsSimulationOn, mouseHold
-        dimensions = { width:800, height:800 }
+        dimensions = { width:1600, height:900 }
     let jsGrowthRate = 0.003;
     window.onload = function() 
     {
@@ -338,12 +326,10 @@
       // define drawing area of webgl canvas. bottom corner, width / height
       // XXX can't remember why we need the *2!
       gl.viewport( 0,0, gl.drawingBufferWidth, gl.drawingBufferHeight )
-      //gl.viewport( 0,0, 640, 320 )
       
       makeBuffer()
       makeShaders()
       makeTextures()
-      //setInitialState()
       mySetInit()
 
 
@@ -362,7 +348,6 @@
 	    var gui = new dat.GUI();
 	    gui.add(text, 'message1');
 
-      //var OnGrowthRate = gui.add(text, 'GrowthRate', 0.0022, 0.005 );
 	    var SimulationEnableController = gui.add(text, 'OnOff')
       var OnFrozen = gui.add(text, 'Frozen')
 
@@ -392,14 +377,6 @@
 
         }
       })
-
-
-      // OnGrowthRate.onChange(function(value)
-      // {
-      //   gl.useProgram( simulationProgram )  
-      //   gl.uniform1f( uGrowthRate, value )
-      // })
-
     }
     
     function makeBuffer() 
@@ -629,7 +606,7 @@
       )
     }
 
-    function myErase( x, y, texture ) 
+    function myErase( x, y, texture )   //does not work, dont know why
     {   
       gl.bindTexture( gl.TEXTURE_2D, texture )
       
@@ -657,7 +634,6 @@
       if((event.clientX < dimensions.width || event.clientY<dimensions.height)
         &&(mouseHold))
       {
-        //console.log(event.clientX + " "+event.clientY );
         myPoke( event.clientX, dimensions.height - event.clientY, 255,255,0,255, textureBack )
         return;
       }
@@ -669,7 +645,6 @@
   		{
   			return;
   		}
-	  //console.log("clientX: " + event.clientX + " - clientY: " + event.clientY);
 
 	    myPoke( event.clientX, dimensions.height - event.clientY, 255,255,0,255, textureBack )
 
